@@ -9,16 +9,16 @@
 import UIKit
 
 protocol InstagramAuthDelegate {
-    func authControllerDidFinish(accessToken: String?, error: NSError?)
+    func instagramAuthControllerDidFinish(accessToken: String?, error: NSError?)
 }
 
 class InstagramAuthViewController: UIViewController {
 
     private let baseURL = "https://api.instagram.com"
     
-    private(set) var clientId: String!
-    private(set) var clientSecret: String!
-    private(set) var redirectUri: String!
+    var clientId: String!
+    var clientSecret: String!
+    var redirectUri: String!
     
     private enum InstagramEndpoints: String {
         case Authorize = "/oauth/authorize/"
@@ -100,7 +100,7 @@ class InstagramAuthViewController: UIViewController {
                 guard let delegate = self.delegate else {
                     fatalError("InstagramAuthDelegate method needs to be implemented")
                 }
-                delegate.authControllerDidFinish(nil, error: error)
+                delegate.instagramAuthControllerDidFinish(nil, error: error)
             } else {
                 self.getAccessToken(data!)
             }
@@ -114,14 +114,14 @@ class InstagramAuthViewController: UIViewController {
             guard let delegate = self.delegate else {
                 fatalError("InstagramAuthDelegate method needs to be implemented")
             }
-            delegate.authControllerDidFinish(accessToken, error: nil)
+            delegate.instagramAuthControllerDidFinish(accessToken, error: nil)
             dismiss()
         } catch let error as NSError {
             print("Error parsing for access token: \(error.localizedDescription)")
             guard let delegate = self.delegate else {
                 fatalError("InstagramAuthDelegate method needs to be implemented")
             }
-            delegate.authControllerDidFinish(nil, error: error)
+            delegate.instagramAuthControllerDidFinish(nil, error: error)
         }
     }
     
@@ -153,7 +153,7 @@ extension InstagramAuthViewController: UIWebViewDelegate {
             guard let delegate = self.delegate else {
                 fatalError("InstagramAuthDelegate method needs to be implemented")
             }
-            delegate.authControllerDidFinish(nil, error: error)
+            delegate.instagramAuthControllerDidFinish(nil, error: error)
         }
     }
 }

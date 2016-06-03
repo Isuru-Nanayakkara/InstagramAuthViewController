@@ -30,7 +30,7 @@ class ViewController: UIViewController {
 }
 
 extension ViewController: InstagramAuthDelegate {
-    func authControllerDidFinish(accessToken: String?, error: NSError?) {
+    func instagramAuthControllerDidFinish(accessToken: String?, error: NSError?) {
         if let error = error {
             print("Error logging in to Instagram: \(error.localizedDescription)")
         } else {
