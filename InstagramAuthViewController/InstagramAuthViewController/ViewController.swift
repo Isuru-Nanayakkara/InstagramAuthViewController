@@ -24,13 +24,13 @@ class ViewController: UIViewController {
         let instagramAuthViewController = InstagramAuthViewController(clientId: clientId, clientSecret: clientSecret, redirectUri: redirectUri)
         instagramAuthViewController.delegate = self
         let navController = UINavigationController(rootViewController: instagramAuthViewController)
-        presentViewController(navController, animated: true, completion: nil)
+        present(navController, animated: true)
     }
     
 }
 
 extension ViewController: InstagramAuthDelegate {
-    func instagramAuthControllerDidFinish(accessToken: String?, error: NSError?) {
+    func instagramAuthControllerDidFinish(accessToken: String?, error: Error?) {
         if let error = error {
             print("Error logging in to Instagram: \(error.localizedDescription)")
         } else {

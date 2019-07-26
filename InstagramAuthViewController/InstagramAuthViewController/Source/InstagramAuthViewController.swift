@@ -9,7 +9,7 @@
 import UIKit
 
 protocol InstagramAuthDelegate {
-    func instagramAuthControllerDidFinish(accessToken: String?, error: NSError?)
+    func instagramAuthControllerDidFinish(accessToken: String?, error: Error?)
 }
 
 class InstagramAuthViewController: UIViewController {
@@ -42,11 +42,11 @@ class InstagramAuthViewController: UIViewController {
         super.init(nibName: nil, bundle: nil)
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        NSURLCache.sharedURLCache().removeAllCachedResponses()
-        NSHTTPCookieStorage.sharedHTTPCookieStorage().deleteAllCookies()
+        URLCache.shared.removeAllCachedResponses()
+        HTTPCookieStorage.shared.deleteAllCookies()
     }
     
     override func viewDidLoad() {
@@ -56,9 +56,9 @@ class InstagramAuthViewController: UIViewController {
         webView.delegate = self
         view.addSubview(webView)
         
-        activityIndicatorView = UIActivityIndicatorView(activityIndicatorStyle: .Gray)
+        activityIndicatorView = UIActivityIndicatorView(style: .gray)
         activityIndicatorView.center = webView.center
-        activityIndicatorView.hidden = true
+        activityIndicatorView.isHidden = true
         activityIndicatorView.hidesWhenStopped = true
         webView.addSubview(activityIndicatorView)
         
@@ -66,99 +66,97 @@ class InstagramAuthViewController: UIViewController {
     }
     
     private func getLoginPage() {
-        activityIndicatorView.hidden = false
+        activityIndicatorView.isHidden = false
         activityIndicatorView.startAnimating()
         
         let authUrl = baseURL + InstagramEndpoints.Authorize.rawValue
-        let components = NSURLComponents(string: authUrl)!
+        var components = URLComponents(string: authUrl)!
         components.queryItems = [
-            NSURLQueryItem(name: "client_id", value: clientId),
-            NSURLQueryItem(name: "redirect_uri", value: redirectUri),
-            NSURLQueryItem(name: "response_type", value: "code")
+            URLQueryItem(name: "client_id", value: clientId),
+            URLQueryItem(name: "redirect_uri", value: redirectUri),
+            URLQueryItem(name: "response_type", value: "code")
         ]
-        let request = NSURLRequest(URL: components.URL!, cachePolicy: .ReloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 10)
+        let request = URLRequest(url: components.url!, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 10)
         webView.loadRequest(request)
     }
     
     private func requestAccessToken(code: String) {
         let tokenUrl = baseURL + InstagramEndpoints.AccessToken.rawValue
-        let components = NSURLComponents(string: tokenUrl)!
+        var components = URLComponents(string: tokenUrl)!
         components.queryItems = [
-            NSURLQueryItem(name: "client_id", value: clientId),
-            NSURLQueryItem(name: "client_secret", value: clientSecret),
-            NSURLQueryItem(name: "grant_type", value: "authorization_code"),
-            NSURLQueryItem(name: "redirect_uri", value: redirectUri),
-            NSURLQueryItem(name: "code", value: code)
+            URLQueryItem(name: "client_id", value: clientId),
+            URLQueryItem(name: "client_secret", value: clientSecret),
+            URLQueryItem(name: "grant_type", value: "authorization_code"),
+            URLQueryItem(name: "redirect_uri", value: redirectUri),
+            URLQueryItem(name: "code", value: code)
         ]
         
-        let request = NSMutableURLRequest(URL: NSURL(string: tokenUrl)!)
-        request.HTTPMethod = "POST"
-        request.HTTPBody = components.percentEncodedQuery!.dataUsingEncoding(NSUTF8StringEncoding)
+        var request = URLRequest(url: URL(string: tokenUrl)!)
+        request.httpMethod = "POST"
+        request.httpBody = components.percentEncodedQuery!.data(using: String.Encoding.utf8)
         
-        NSURLSession.sharedSession().dataTaskWithRequest(request) { data, response, error in
+        URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 guard let delegate = self.delegate else {
                     fatalError("InstagramAuthDelegate method needs to be implemented")
                 }
-                delegate.instagramAuthControllerDidFinish(nil, error: error)
+                delegate.instagramAuthControllerDidFinish(accessToken: nil, error: error)
             } else {
-                self.getAccessToken(data!)
+                self.getAccessToken(data: data!)
             }
         }.resume()
     }
     
-    private func getAccessToken(data: NSData) {
+    private func getAccessToken(data: Data) {
         do {
-            let result = try NSJSONSerialization.JSONObjectWithData(data, options: .AllowFragments) as! [String: AnyObject]
+            let result = try JSONSerialization.jsonObject(with: data, options: .allowFragments) as! [String: Any]
             let accessToken = result["access_token"] as! String
             guard let delegate = self.delegate else {
                 fatalError("InstagramAuthDelegate method needs to be implemented")
             }
-            delegate.instagramAuthControllerDidFinish(accessToken, error: nil)
+            delegate.instagramAuthControllerDidFinish(accessToken: accessToken, error: nil)
             dismiss()
-        } catch let error as NSError {
+        } catch let error {
             print("Error parsing for access token: \(error.localizedDescription)")
             guard let delegate = self.delegate else {
                 fatalError("InstagramAuthDelegate method needs to be implemented")
             }
-            delegate.instagramAuthControllerDidFinish(nil, error: error)
+            delegate.instagramAuthControllerDidFinish(accessToken: nil, error: error)
         }
     }
     
     private func dismiss() {
-        NSOperationQueue.mainQueue().addOperationWithBlock {
-            self.dismissViewControllerAnimated(true, completion: nil)
+        OperationQueue.main.addOperation {
+            self.dismiss(animated: true, completion: nil)
         }
     }
 }
 
 extension InstagramAuthViewController: UIWebViewDelegate {
-    func webView(webView: UIWebView, shouldStartLoadWithRequest request: NSURLRequest, navigationType: UIWebViewNavigationType) -> Bool {
-        let urlString = request.URL!.absoluteString
-        if let range = urlString.rangeOfString("\(redirectUri)?code=") {
-            let location = range.endIndex
-            let code = urlString.substringFromIndex(location)
-            requestAccessToken(code)
+    func webView(_ webView: UIWebView, shouldStartLoadWith request: URLRequest, navigationType: UIWebView.NavigationType) -> Bool {
+        let urlString = request.url!.absoluteString
+        if let range = urlString.range(of: "\(redirectUri)?code=") {
+            let location = range.lowerBound
+            let code = urlString.substring(from: location)
+            requestAccessToken(code: code)
             return false
         }
         return true
     }
     
-    func webViewDidFinishLoad(webView: UIWebView) {
+    func webViewDidFinishLoad(_ webView: UIWebView) {
         activityIndicatorView.stopAnimating()
     }
     
-    func webView(webView: UIWebView, didFailLoadWithError error: NSError?) {
-        if let error = error where error.domain == NSURLErrorDomain {
-            guard let delegate = self.delegate else {
-                fatalError("InstagramAuthDelegate method needs to be implemented")
-            }
-            delegate.instagramAuthControllerDidFinish(nil, error: error)
+    func webView(_ webView: UIWebView, didFailLoadWithError error: Error) {
+        guard let delegate = self.delegate else {
+            fatalError("InstagramAuthDelegate method needs to be implemented")
         }
+        delegate.instagramAuthControllerDidFinish(accessToken: nil, error: error)
     }
 }
 
-extension NSHTTPCookieStorage {
+extension HTTPCookieStorage {
     func deleteAllCookies() {
         if let cookies = self.cookies {
             for cookie in cookies {
