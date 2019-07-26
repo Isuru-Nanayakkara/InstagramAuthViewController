@@ -11,7 +11,7 @@ Inspired by [Instagram-Auth-iOS](https://github.com/Buza/Instagram-Auth-iOS). Us
 ## Requirements
 
 - iOS 8.0+
-- Xcode 7.3
+- Xcode 7.3<
 
 ## Installation
 
