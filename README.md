@@ -70,7 +70,7 @@ func instagramAuthControllerDidFinish(accessToken: String?, error: NSError?) {
 
 ## Contribute & Bug Fixes
 
-We would love for you to contribute to **InstagramAuthViewController**, check the ``LICENSE`` file for more info. Pull requests, bug fixes, improvements welcome.
+I would love for you to contribute to **InstagramAuthViewController**, check the ``LICENSE`` file for more info. Pull requests, bug fixes, improvements welcome.
 
 ## Meta
 
